@@ -13,9 +13,9 @@ const text = document.querySelector("#text");
 const xpText = document.querySelector("#xpText");
 const healthText = document.querySelector("#healthText");
 const goldText = document.querySelector("#goldText");
+const monsterStats = document.querySelector("#monsterStats");
 const monsterNameText = document.querySelector("#monsterName");
 const monsterHealthText = document.querySelector("#monsterHealth");
-const monsterStats = document.querySelector("#monsterStats");
 
 const weapons = [
   {
@@ -78,6 +78,24 @@ const locations = [
     "button text": ["Attack", "Dodge", "Run"],
     "button function": [attack, dodge, goTown],
     text: "You are fighting a monster."
+  },
+  {
+    name: "kill monster",
+    "button text": ["Go to town square", "Go to town square", "Go to town square"],
+    "button function": [goTown, goTown, goTown],
+    text: "The monster screams \"Arg!\" as it dies. You gain xp and gold!"
+  },
+  {
+    name: "lose",
+    "button text": ["Replay?", "Replay?", "Replay?"],
+    "button function": [restart, restart, restart],
+    text: "You die."
+  },
+  {
+    name: "win",
+    "button text": ["Replay?", "Replay?", "Replay?"],
+    "button function": [restart, restart, restart],
+    text: "You defeated the dragon! You are the hero of the town! YOU WIN THE GAME!"
   }
 ];
 
@@ -87,6 +105,7 @@ button2.onclick = goCave;
 button3.onclick = fightDragon;
 
 function update(location) {
+  monsterStats.style.display = "none";
   button1.innerText = location["button text"][0];
   button2.innerText = location["button text"][1];
   button3.innerText = location["button text"][2];
@@ -139,11 +158,11 @@ function buyWeapon() {
 }
 
 function sellWeapon() {
-  if (inventory > 1) {
+  if (inventory.length > 1) {
     gold += 15;
     goldText.innerText = gold;
     let currentWeapon = inventory.shift();
-    text.innerText = "You sold a " + currentWeapon + "for 15 gold."
+    text.innerText = "You sold a " + currentWeapon + " for 15 gold."
     text.innerText += " In your inventory you have: " + inventory;
   } else {
     text.innerText = "You can't sell your only weapon!" 
@@ -168,7 +187,7 @@ function fightDragon() {
 function goFight() {
   update(locations[3]);
   monsterHealth = monsters[fighting].health;
-  monsterStats.style.dislay = "block";
+  monsterStats.style.display = "block";
   monsterNameText.innerText = monsters[fighting].name;
   monsterHealthText.innerText = monsterHealth;
 }
@@ -176,15 +195,34 @@ function goFight() {
 function attack() {
   text.innerText = "The " + monsters[fighting].name + " attacks!";
   text.innerText += " You attack it with your " + weapons[currentWeapon].name + "!";
-  health -= monsters[fighting].level;
+  if (isMonsterHit()) {
+    health -= getMonsterAttackValue(monsters[fighting].level);
+  } else {
+    text.innerText += "You missed!";
+  }
   monsterHealth -= weapons[currentWeapon].power + Math.floor(Math.random() * xp) + 1;
   healthText.innerText = health;
   monsterHealthText.innerText = monsterHealth;
   if (health <= 0) {
     lose();
   } else if (monsterHealth <= 0) {
-    defeatMonster();
+    fighting === 2 ? winGame() : defeatMonster();
   }
+
+  if (Math.random() <= .1 && inventory.length !== 1) {
+    text.innerText += " Your " + inventory.pop() + " breaks!";
+    currentWeapon -= 1;
+  }
+}
+
+function getMonsterAttackValue(level) {
+  let hit = (level * 5) - (Math.floor(Math.random() * xp));
+  console.log(hit);
+  return hit;
+}
+
+function isMonsterHit() {
+  return Math.random() > .2 || health < 20;
 }
 
 function dodge() {
@@ -192,7 +230,7 @@ function dodge() {
 }
 
 function lose() {
-
+  update(locations[5]);
 }
 
 function defeatMonster() {
@@ -200,6 +238,21 @@ function defeatMonster() {
   xp += monsters[fighting].level;
   goldText.innerText = gold;
   xpText.innerText = xp;
-  text.innerText = "You defeated the " + monsters[fighting].name + "!"
-  text.innerText += " You obtain " + gold + "gold and " + xp + " xp!"
+  update(locations[4]);
+}
+
+function winGame() {
+  update(locations[6]);
+}
+
+function restart() {
+  xp = 0;
+  health = 100;
+  gold = 50;
+  currentWeapon = 0;
+  inventory = ["stick"];
+  goldText.innerText = gold;
+  healthText.innerText = health;
+  xpText.innerText = xp;
+  goTown();
 }
