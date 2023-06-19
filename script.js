@@ -231,6 +231,7 @@ function dodge() {
 
 function lose() {
   update(locations[5]);
+  healthText.innerText = 0;
 }
 
 function defeatMonster() {
